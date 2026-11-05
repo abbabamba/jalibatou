@@ -1,0 +1,77 @@
+JALIBATOU COLLECTION – MISE EN LIGNE DU SITE
+=============================================
+
+Contenu du dossier
+- index.html   : la boutique publique (catalogue, panier, commande, suivi de commande)
+- admin.html   : l'espace gérante (commandes en direct, produits + photos, frais de livraison)
+- config.js    : réglages (numéro WhatsApp à remplir)
+- common.js, style.css, logo.jpg, mono.jpg : fichiers du site
+
+La base de données (Supabase, projet « jalibatou-collection ») est déjà prête :
+produits, commandes, zones de livraison, photos, sécurité et fonctions de paiement.
+
+
+ÉTAPE 1 – Mettre votre numéro WhatsApp (2 min)
+Ouvrez config.js et remplacez 221000000000 par votre numéro, ex. 221771234567.
+
+
+ÉTAPE 2 – Mettre le site en ligne (gratuit, 5 min, depuis un ordinateur)
+1. Créez un compte sur https://app.netlify.com
+2. Allez sur https://app.netlify.com/drop
+3. Glissez-déposez le dossier « jalibatou-site » entier.
+4. Netlify vous donne une adresse du type https://xxxx.netlify.app
+   (vous pourrez la renommer, puis brancher jalibatoucollection.sn plus tard).
+Pour une mise à jour : Netlify > votre site > Deploys > glissez à nouveau le dossier.
+
+
+ÉTAPE 3 – Régler la connexion de l'espace gérante (3 min)
+Dans Supabase > projet jalibatou-collection > Authentication > URL Configuration :
+- Site URL : https://xxxx.netlify.app   (votre adresse Netlify)
+- Redirect URLs : ajoutez https://xxxx.netlify.app/admin.html
+Puis ouvrez https://xxxx.netlify.app/admin.html > « Première connexion ? »
+Créez votre accès avec abakarae313@gmail.com, confirmez l'e-mail reçu, connectez-vous.
+Seule cette adresse a accès aux commandes. Pour ajouter une autre gérante, demandez-le.
+
+Ensuite, dans l'espace gérante :
+- supprimez la commande et le produit « TEST à supprimer » (créés pour tester)
+- ajoutez vos produits avec photos
+- vérifiez les frais de livraison (onglet Livraison)
+
+
+ÉTAPE 4 – Brancher PayDunya (quand votre compte est validé)
+1. Créez un compte PayDunya Business sur https://paydunya.com et faites valider votre dossier.
+2. Dans PayDunya : « Intégrez notre API » > créez une application > récupérez
+   Master Key, Private Key et Token (d'abord les clés de TEST).
+3. Dans Supabase > Edge Functions > Secrets, ajoutez :
+   PAYDUNYA_MASTER_KEY, PAYDUNYA_PRIVATE_KEY, PAYDUNYA_TOKEN
+   SITE_URL = https://xxxx.netlify.app
+   (laissez PAYDUNYA_MODE vide pour le mode test)
+4. Faites une commande test sur le site avec Wave ou Orange Money :
+   vous êtes redirigée vers PayDunya, puis la commande passe « Payée » toute seule.
+5. Quand tout marche : mettez les clés de PRODUCTION et ajoutez PAYDUNYA_MODE = live.
+
+Tant que PayDunya n'est pas branché, le site fonctionne quand même :
+la cliente commande, vous voyez la commande en direct, et vous lui envoyez
+le paiement Wave par WhatsApp (bouton « WhatsApp : confirmer »). Vous marquez
+ensuite « Payée » à la main.
+
+
+INSTALLER LE SITE SUR LE TÉLÉPHONE (une fois le site en ligne, en https)
+Ouvrez admin.html (ou la boutique) dans le navigateur du téléphone :
+- Android / Chrome : menu ⋮ > « Ajouter à l'écran d'accueil »
+- iPhone / Safari : bouton Partager > « Sur l'écran d'accueil »
+L'icône s'ouvre ensuite en plein écran, comme une application.
+
+
+COMMENT LES COMMANDES SONT GÉRÉES
+- Le prix et le stock sont recalculés par le serveur : une cliente ne peut pas modifier un prix.
+- Le stock baisse à chaque commande et remonte si vous passez la commande en « Annulée ».
+- Statuts : Nouvelle > Confirmée > En livraison > Livrée (ou Annulée).
+- Paiement : En attente / Payée / Échec / Remboursée (automatique avec PayDunya).
+- La cliente suit sa commande avec son numéro JC-XXXXXX et son téléphone.
+- Anti-abus : 3 commandes non payées maximum par numéro et par heure.
+- Les nouvelles commandes apparaissent en direct dans l'espace gérante.
+
+Bon à savoir : sur l'offre gratuite, Supabase met le projet en pause après
+7 jours sans aucune visite. Avec des clientes régulières cela n'arrive pas ;
+sinon, un clic sur « Restore » dans Supabase le relance.

@@ -1,0 +1,16 @@
+{
+  "name": "Jalibatou – Espace gérante",
+  "short_name": "Gérante",
+  "description": "Commandes, produits et livraison de Jalibatou Collection.",
+  "lang": "fr",
+  "id": "./admin.html",
+  "start_url": "./admin.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0b0907",
+  "theme_color": "#0b0907",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

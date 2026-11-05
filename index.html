@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Jalibatou Collection – Sacs, bijoux, perruques et mode à Dakar</title>
+<meta name="description" content="Sacs, bijoux, perruques, chaussures, vêtements et beauté. Livraison à Dakar et dans les régions. Paiement Wave, Orange Money ou à la livraison.">
+<meta property="og:title" content="Jalibatou Collection">
+<meta property="og:description" content="Tout ce que vous aimez, au même endroit. Livraison partout au Sénégal.">
+<meta property="og:image" content="logo.jpg">
+<link rel="icon" href="mono.jpg">
+<meta name="theme-color" content="#0b0907">
+<link rel="manifest" href="boutique.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Jalibatou">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Great+Vibes&family=Jost:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="style.css?v=3">
+<style>html,body{margin:0}img{max-width:100%}[hidden]{display:none!important}body{-webkit-text-size-adjust:100%}</style>
+</head>
+<body>
+<header>
+  <div class="wrap hbar">
+    <a class="brand" href="./"><img src="mono.jpg" alt=""><span><b class="goldtxt">JALIBATOU</b><small>COLLECTION</small></span></a>
+    <div class="search"><input id="q" type="search" placeholder="Rechercher un sac, une perruque, des lunettes…" aria-label="Rechercher"></div>
+    <button class="cartbtn" id="openCart" aria-label="Ouvrir le panier">Panier <span class="n" id="count">0</span></button>
+  </div>
+</header>
+
+<main>
+  <section class="wrap hero">
+    <div>
+      <h1 class="goldtxt">La mode qui vous ressemble, livrée chez vous.</h1>
+      <div class="tag">Tout ce que vous aimez, au même endroit.</div>
+      <p>Sacs, bijoux, perruques, chaussures, vêtements et beauté. Des articles tendance importés, choisis pour les Sénégalaises, au prix juste en FCFA.</p>
+      <div class="cta"><button class="btn gold" id="goShop">Voir la boutique</button><button class="btn ghost" id="openTrack">Suivre ma commande</button></div>
+    </div>
+    <figure><img src="logo.jpg" alt="Logo Jalibatou Collection" width="320" height="320"></figure>
+  </section>
+
+  <div class="wrap trust">
+    <div><b>Livraison 24–48 h</b>Dakar, banlieue et régions</div>
+    <div><b>Paiement Wave</b>Le moyen préféré des clientes</div>
+    <div><b>Paiement à la livraison</b>Vous payez en recevant</div>
+    <div><b>Échange sous 72 h</b>Si la taille ne va pas</div>
+  </div>
+
+  <section class="wrap" id="boutique">
+    <div class="cats" id="cats" role="group" aria-label="Catégories"></div>
+    <div class="sechead"><h2 id="secTitle">Toute la collection</h2><span id="secNote"></span></div>
+    <div class="grid" id="grid" aria-busy="true"><div class="card sk"></div><div class="card sk"></div><div class="card sk"></div><div class="card sk"></div></div>
+  </section>
+
+  <section class="pay"><div class="wrap">
+    <div class="sechead"><h2>Payer comme vous voulez</h2></div>
+    <div class="paylist">
+      <div class="pm"><b><span class="dot" style="background:var(--wave)"></span>Wave</b><small>Paiement instantané depuis votre téléphone</small></div>
+      <div class="pm"><b><span class="dot" style="background:var(--om)"></span>Orange Money</b><small>Validation par code ou Max It</small></div>
+      <div class="pm"><b><span class="dot" style="background:var(--ok)"></span>À la livraison</b><small>En espèces ou Wave au livreur</small></div>
+    </div>
+  </div></section>
+</main>
+
+<footer><div class="wrap"><span>© <span id="yr"></span> Jalibatou Collection · Dakar, Sénégal</span><span>WhatsApp : <a id="waLink" style="color:var(--gold-hi)" target="_blank" rel="noopener"></a></span><a class="adminlink" href="admin.html">Espace gérante</a></div></footer>
+
+<div class="scrim" id="scrim" hidden></div>
+<aside class="drawer" id="drawer" hidden aria-label="Panier">
+  <div class="grip" aria-hidden="true"></div>
+  <div class="dhead"><h2 id="dTitle">Votre panier</h2><button class="x" id="closeCart" aria-label="Fermer">×</button></div>
+  <div class="steps" id="dSteps" hidden></div>
+  <div class="dbody" id="dbody"></div>
+  <div class="dfoot" id="dfoot"></div>
+</aside>
+<aside class="sheet" id="sheet" hidden role="dialog" aria-modal="true" aria-label="Fiche produit"></aside>
+<nav class="bnav" aria-label="Navigation">
+  <button id="nHome" data-ic="home"><span>Boutique</span></button>
+  <button id="nSearch" data-ic="search"><span>Rechercher</span></button>
+  <button id="nCart" class="main" data-ic="bag" aria-label="Ouvrir le panier"><span>Panier</span><i class="n" id="count2" hidden>0</i></button>
+  <button id="nTrack" data-ic="pin"><span>Suivi</span></button>
+  <a id="nWa" data-ic="wa" target="_blank" rel="noopener"><span>WhatsApp</span></a>
+</nav>
+<div class="toast" id="toast" hidden></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="config.js?v=2"></script>
+<script src="common.js?v=3"></script>
+<script>
+$("yr").textContent = new Date().getFullYear();
+const waNum = CFG.WHATSAPP;
+$("waLink").textContent = "+" + waNum.replace(/^221(\d{2})(\d{3})(\d{2})(\d{2})$/, "221 $1 $2 $3 $4");
+$("waLink").href = "https://wa.me/" + waNum;
+$("nWa").href = "https://wa.me/" + waNum;
+const setHH = () => document.documentElement.style.setProperty("--hh", document.querySelector("header").offsetHeight + "px");
+addEventListener("resize", setHH); setHH();
+
+let products = [], zones = [], cat = "tout", q = "", cart = {}, step = "cart", lastOrder = null, tracked = null;
+let form = { nom: "", tel: "", adresse: "", zone: "dakar", pay: "wave" };
+try { const s = JSON.parse(localStorage.getItem("jc_cart") || "{}"); if (s && typeof s === "object") cart = s; } catch (e) {}
+try { const f = JSON.parse(localStorage.getItem("jc_form") || "null"); if (f) form = { ...form, ...f }; } catch (e) {}
+const save = () => { try { localStorage.setItem("jc_cart", JSON.stringify(cart)); } catch (e) {} };
+const saveForm = () => { try { localStorage.setItem("jc_form", JSON.stringify({ nom: form.nom, tel: form.tel, adresse: form.adresse, zone: form.zone })); } catch (e) {} };
+
+/* Catalogue */
+function renderCats() { $("cats").innerHTML = CATS.map(([k, l]) => `<button aria-pressed="${k === cat}" data-c="${k}">${l}</button>`).join(""); }
+$("cats").onclick = e => {
+  const b = e.target.closest("button"); if (!b) return; cat = b.dataset.c; renderCats(); renderGrid();
+  const on = $("cats").querySelector('[aria-pressed="true"]'); if (on) $("cats").scrollTo({ left: on.offsetLeft - ($("cats").clientWidth - on.offsetWidth) / 2, behavior: "smooth" });
+  if ($("boutique").getBoundingClientRect().top < 0) $("boutique").scrollIntoView();
+};
+$("q").oninput = e => { q = e.target.value.toLowerCase(); renderGrid(); };
+const outOfStock = p => p.stock !== null && p.stock <= 0;
+function renderGrid() {
+  const list = products.filter(x => (cat === "tout" || x.category === cat) && x.name.toLowerCase().includes(q));
+  $("secTitle").textContent = cat === "tout" ? "Toute la collection" : catName(cat);
+  $("secNote").textContent = products.length ? `${list.length} article${list.length > 1 ? "s" : ""}` : "";
+  $("grid").removeAttribute("aria-busy");
+  if (!products.length) { $("grid").innerHTML = `<p class="status">La collection arrive bientôt. Revenez très vite !</p>`; return; }
+  $("grid").innerHTML = list.length ? list.map((x, i) => {
+    const out = outOfStock(x);
+    const badge = out ? `<span class="badge low">Épuisé</span>` : (x.stock !== null && x.stock <= 3) ? `<span class="badge low">Plus que ${x.stock}</span>` : x.badge ? `<span class="badge">${esc(x.badge)}</span>` : "";
+    return `<article class="card ${out ? "out" : ""}" style="--i:${Math.min(i, 8)}"><div class="thumb" data-open="${x.id}" role="button" tabindex="0" aria-label="Voir ${esc(x.name)}">${ICONS[x.category] || ""}${x.image_path ? `<img src="${imgUrl(x.image_path)}" alt="" loading="lazy" onerror="this.remove()">` : ""}${badge}</div><div class="info"><span class="cat">${catName(x.category)}</span><h3 data-open="${x.id}">${esc(x.name)}</h3>${x.description ? `<small class="desc">${esc(x.description)}</small>` : ""}${priceHtml(x)}<button class="add" data-id="${x.id}" ${out ? "disabled" : ""}>${out ? "Épuisé" : "Ajouter au panier"}</button></div></article>`;
+  }).join("") : `<p class="empty">Aucun article ne correspond à votre recherche.</p>`;
+}
+function priceHtml(x) {
+  const off = x.old_price > x.price ? Math.round((1 - x.price / x.old_price) * 100) : 0;
+  return `<div class="price"><b>${fmt(x.price)}</b>${off ? `<s>${fmt(x.old_price)}</s><em class="off">−${off} %</em>` : ""}</div>`;
+}
+function addToCart(p, qty = 1) {
+  const n = (cart[p.id] || 0) + qty;
+  if (p.stock !== null && n > p.stock) { toast(`Il ne reste que ${p.stock} exemplaire${p.stock > 1 ? "s" : ""}.`); return false; }
+  cart[p.id] = n; save(); updCount(true);
+  try { navigator.vibrate && navigator.vibrate(15); } catch (e) {}
+  return true;
+}
+$("grid").onclick = e => {
+  const b = e.target.closest(".add");
+  if (b) {
+    if (b.disabled || !addToCart(products.find(x => x.id === b.dataset.id))) return;
+    b.classList.add("ok"); b.textContent = "Ajouté ✓";
+    clearTimeout(b.t); b.t = setTimeout(() => { b.classList.remove("ok"); b.textContent = "Ajouter au panier"; }, 1200);
+    return;
+  }
+  const o = e.target.closest("[data-open]"); if (o) openProduct(o.dataset.open);
+};
+$("grid").onkeydown = e => { if (e.key === "Enter" && e.target.dataset.open) openProduct(e.target.dataset.open); };
+
+/* Fiche produit */
+function openProduct(id) {
+  const x = products.find(p => p.id === id); if (!x) return;
+  const out = outOfStock(x), max = Math.min(x.stock === null ? 20 : x.stock, 20), s = $("sheet"); let q = 1;
+  const wa = `Bonjour ${CFG.BOUTIQUE}, je souhaite des informations sur « ${x.name} » (${fmt(x.price)}). Est-il disponible ?`;
+  s.innerHTML = `<div class="grip" aria-hidden="true"></div><button class="x" id="sClose" aria-label="Fermer">×</button>
+    <div class="sbody"><div class="simg">${ICONS[x.category] || ""}${x.image_path ? `<img src="${imgUrl(x.image_path)}" alt="${esc(x.name)}" onerror="this.remove()">` : ""}</div>
+    <div class="sinfo"><span class="cat">${catName(x.category)}</span><h2>${esc(x.name)}</h2>${x.description ? `<p>${esc(x.description)}</p>` : ""}${priceHtml(x)}${out ? `<p>Cet article est épuisé pour le moment.</p>` : x.stock !== null && x.stock <= 3 ? `<p>Plus que ${x.stock} en stock.</p>` : ""}</div></div>
+    <div class="sfoot">${out ? "" : `<div class="sbuy"><div class="qty"><button id="sMinus" aria-label="Retirer un">−</button><span id="sQty">1</span><button id="sPlus" aria-label="Ajouter un">+</button></div><button class="btn gold" id="sAdd"></button></div>`}<a class="btn wa" href="https://wa.me/${waNum}?text=${encodeURIComponent(wa)}" target="_blank" rel="noopener">${ic("wa")}Demander sur WhatsApp</a></div>`;
+  const paint = () => { $("sQty").textContent = q; $("sAdd").textContent = `Ajouter · ${fmt(x.price * q)}`; };
+  $("sClose").onclick = closeSheet;
+  if (!out) {
+    paint();
+    $("sMinus").onclick = () => { if (q > 1) { q--; paint(); } };
+    $("sPlus").onclick = () => { if (q < max) { q++; paint(); } else toast(`${max} au maximum pour cet article.`); };
+    $("sAdd").onclick = () => { if (addToCart(x, q)) { closeSheet(); toast("Ajouté au panier"); } };
+  }
+  s.style.transform = ""; s.hidden = false; $("scrim").hidden = false; document.body.classList.add("locked");
+}
+function closeSheet() {
+  if ($("sheet").hidden) return;
+  $("sheet").hidden = true;
+  if ($("drawer").hidden) { $("scrim").hidden = true; document.body.classList.remove("locked"); }
+}
+// Glisser vers le bas pour fermer
+function swipeClose(el, close) {
+  let y0 = null, dy = 0;
+  el.addEventListener("touchstart", e => { if (e.target.closest(".grip,.dhead,.simg")) { y0 = e.touches[0].clientY; dy = 0; } }, { passive: true });
+  el.addEventListener("touchmove", e => { if (y0 === null) return; dy = Math.max(0, e.touches[0].clientY - y0); el.style.transform = `translateY(${dy}px)`; }, { passive: true });
+  const end = () => { if (y0 === null) return; y0 = null; el.style.transform = ""; if (dy > 90) close(); };
+  el.addEventListener("touchend", end); el.addEventListener("touchcancel", end);
+}
+swipeClose($("sheet"), closeSheet);
+
+/* Barre du bas */
+$("nHome").onclick = () => $("boutique").scrollIntoView({ behavior: "smooth" });
+$("nCart").onclick = () => openDrawer("cart");
+$("nTrack").onclick = () => openDrawer("track");
+$("nSearch").onclick = () => {
+  const on = document.body.classList.toggle("searching"); setHH();
+  if (on) { $("q").focus({ preventScroll: true }); $("boutique").scrollIntoView({ behavior: "smooth" }); }
+  else if (q) { q = ""; $("q").value = ""; renderGrid(); }
+};
+const items = () => Object.entries(cart).filter(([, n]) => n > 0).map(([id, n]) => { const p = products.find(x => x.id === id); return p ? { ...p, q: n } : null; }).filter(Boolean);
+const sub = () => items().reduce((s, x) => s + x.price * x.q, 0);
+const zoneFee = () => (zones.find(z => z.id === form.zone) || { fee: 0 }).fee;
+function updCount(bump) {
+  const n = items().reduce((s, x) => s + x.q, 0);
+  [$("count"), $("count2")].forEach(el => { el.textContent = n; if (bump) { el.classList.remove("bump"); void el.offsetWidth; el.classList.add("bump"); } });
+  $("count2").hidden = !n;
+}
+
+/* Tiroir : panier, commande, confirmation, suivi */
+function openDrawer(s) { if (s) step = s; $("scrim").hidden = false; $("drawer").hidden = false; $("drawer").style.transform = ""; document.body.classList.add("locked"); renderDrawer(); }
+function closeDrawer() { $("drawer").hidden = true; if ($("sheet").hidden) { $("scrim").hidden = true; document.body.classList.remove("locked"); } if (step === "done" || step === "track") step = "cart"; }
+const closeAll = () => { closeSheet(); closeDrawer(); };
+$("openCart").onclick = () => openDrawer("cart"); $("openTrack").onclick = () => openDrawer("track");
+$("closeCart").onclick = closeDrawer; $("scrim").onclick = closeAll;
+swipeClose($("drawer"), closeDrawer);
+$("goShop").onclick = () => $("boutique").scrollIntoView({ behavior: "smooth" });
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeAll(); });
+function setSteps(n) {
+  const s = $("dSteps"); s.hidden = !n;
+  if (n) s.innerHTML = ["Panier", "Livraison", "Confirmation"].map((l, i) => `<span class="${i + 1 < n ? "past" : i + 1 === n ? "now" : ""}"><i>${i + 1 < n ? "✓" : i + 1}</i>${l}</span>`).join("");
+}
+const mini = x => `<div class="mini">${x.image_path ? `<img src="${imgUrl(x.image_path)}" alt="">` : (ICONS[x.category] || "")}</div>`;
+
+function renderDrawer() {
+  const b = $("dbody"), f = $("dfoot"); b.onclick = b.oninput = b.onchange = null; b.scrollTop = 0;
+  if (step === "track") return renderTrack();
+  if (step === "done") return renderDone();
+  const it = items();
+  if (!it.length) { setSteps(0); $("dTitle").textContent = "Votre panier"; b.innerHTML = `<p class="empty" style="padding:30px 0">Votre panier est vide.<br>Ajoutez un article depuis la boutique.</p><button class="btn gold" id="emptyGo">Voir la boutique</button>`; f.innerHTML = ""; $("emptyGo").onclick = () => { closeDrawer(); $("boutique").scrollIntoView({ behavior: "smooth" }); }; return; }
+  if (step === "cart") {
+    setSteps(1); $("dTitle").textContent = "Votre panier";
+    b.innerHTML = it.map(x => `<div class="line">${mini(x)}<div><h4>${esc(x.name)}</h4><small>${fmt(x.price)}</small></div><div class="qty"><button data-d="${x.id}" aria-label="Retirer un">−</button><span>${x.q}</span><button data-i="${x.id}" aria-label="Ajouter un">+</button></div></div>`).join("");
+    f.innerHTML = `<div class="row total"><span>Sous-total</span><span>${fmt(sub())}</span></div><small style="color:var(--muted)">Frais de livraison calculés à l'étape suivante.</small><button class="btn gold" id="next">Commander</button>`;
+    b.onclick = e => { const t = e.target.closest("button"); if (!t) return; const id = t.dataset.i || t.dataset.d; const p = products.find(x => x.id === id);
+      if (t.dataset.i) { if (p.stock !== null && cart[id] + 1 > p.stock) return toast("Stock maximum atteint"); cart[id]++; } else { cart[id]--; if (cart[id] <= 0) delete cart[id]; }
+      save(); updCount(); renderDrawer(); };
+    $("next").onclick = () => { step = "checkout"; renderDrawer(); }; return;
+  }
+  setSteps(2); $("dTitle").textContent = "Livraison et paiement";
+  if (!zones.find(z => z.id === form.zone) && zones[0]) form.zone = zones[0].id;
+  b.innerHTML = `
+    <label for="f-nom">Nom complet<input id="f-nom" value="${esc(form.nom)}" placeholder="Aïssatou Ndiaye" autocomplete="name"></label>
+    <label for="f-tel">Téléphone (Wave / WhatsApp)<input id="f-tel" value="${esc(form.tel)}" inputmode="tel" placeholder="77 123 45 67" autocomplete="tel"></label>
+    <label for="f-adr">Quartier et adresse<input id="f-adr" value="${esc(form.adresse)}" placeholder="Sacré-Cœur 3, villa 120" autocomplete="street-address"></label>
+    <label for="f-zone">Zone de livraison<select id="f-zone">${zones.map(z => `<option value="${z.id}" ${z.id === form.zone ? "selected" : ""}>${esc(z.label)} · ${z.fee ? fmt(z.fee) : "gratuit"}</option>`).join("")}</select></label>
+    <div><div style="font-size:13px;color:var(--muted);margin-bottom:6px">Moyen de paiement</div><div class="opts">${PAYS.map(p => `<label class="opt"><input type="radio" name="pay" id="pay-${p[0]}" value="${p[0]}" ${p[0] === form.pay ? "checked" : ""}><span class="dot" style="background:var(--${PAYC[p[0]]})"></span>${p[1]}<small>${p[2]}</small></label>`).join("")}</div></div>
+    <p class="err" id="err" hidden></p>`;
+  const sync = () => { form.nom = $("f-nom").value.trim(); form.tel = $("f-tel").value.trim(); form.adresse = $("f-adr").value.trim(); form.zone = $("f-zone").value; form.pay = (b.querySelector("input[name=pay]:checked") || {}).value || "wave"; foot(); };
+  b.oninput = sync; b.onchange = sync;
+  function foot() {
+    f.innerHTML = `<div class="row"><span>Articles</span><span>${fmt(sub())}</span></div><div class="row"><span>Livraison</span><span>${zoneFee() ? fmt(zoneFee()) : "Gratuit"}</span></div><div class="row total"><span>Total</span><span>${fmt(sub() + zoneFee())}</span></div><div style="display:flex;gap:8px"><button class="btn ghost" id="back">Retour</button><button class="btn gold" id="payBtn" style="flex:1">${form.pay === "livraison" ? "Valider la commande" : "Payer " + fmt(sub() + zoneFee())}</button></div>`;
+    $("back").onclick = () => { step = "cart"; renderDrawer(); }; $("payBtn").onclick = submit;
+  }
+  foot();
+}
+
+async function submit() {
+  const tel = cleanTel(form.tel), err = $("err"), btn = $("payBtn");
+  const fail = m => { err.textContent = m; err.hidden = false; err.scrollIntoView({ block: "center", behavior: "smooth" }); btn.disabled = false; btn.textContent = form.pay === "livraison" ? "Valider la commande" : "Payer " + fmt(sub() + zoneFee()); };
+  if (form.nom.length < 2) return fail("Indiquez votre nom pour que le livreur vous trouve.");
+  if (!telOk(tel)) return fail("Numéro invalide : il doit compter 9 chiffres et commencer par 70, 75, 76, 77 ou 78.");
+  if (form.zone !== "retrait" && form.adresse.length < 3) return fail("Indiquez votre quartier pour la livraison.");
+  btn.disabled = true; btn.textContent = "Envoi de la commande…"; err.hidden = true; saveForm();
+  const lines = items();
+  try {
+    const r = await callFn("create-order", { name: form.nom, phone: tel, address: form.adresse, zone: form.zone, payment: form.pay, items: lines.map(x => ({ id: x.id, qty: x.q })) });
+    lastOrder = { ...r, phone: tel, pay: form.pay, name: form.nom, lines: lines.map(x => ({ name: x.name, q: x.q, price: x.price })), zone: (zones.find(z => z.id === form.zone) || {}).label, address: form.adresse };
+    cart = {}; save(); updCount(); loadProducts();
+    try { localStorage.setItem("jc_last", JSON.stringify({ ref: r.ref, tel })); } catch (e) {}
+    if (r.payment_url) { btn.textContent = "Redirection vers le paiement…"; location.href = r.payment_url; return; }
+    step = "done"; renderDrawer();
+  } catch (e) { fail(e.message); }
+}
+
+function orderMsg(o) {
+  return `Bonjour ${CFG.BOUTIQUE}, voici ma commande ${o.ref} :\n` + o.lines.map(x => `• ${x.q} × ${x.name} – ${fmt(x.price * x.q)}`).join("\n") + `\nLivraison : ${o.zone} (${o.shipping_fee ? fmt(o.shipping_fee) : "gratuit"})\nTotal : ${fmt(o.total)}\nPaiement : ${payName(o.pay)}\n\n${o.name} · ${o.phone}\n${o.address || "Retrait boutique"}`;
+}
+function renderDone() {
+  const o = lastOrder, b = $("dbody"), f = $("dfoot");
+  setSteps(3); $("dTitle").textContent = "Commande enregistrée";
+  const payTxt = o.pay === "livraison" ? `Vous paierez ${fmt(o.total)} au livreur, en espèces ou par Wave.` : `Nous vous envoyons le lien de paiement ${payName(o.pay)} de ${fmt(o.total)} sur WhatsApp.`;
+  b.innerHTML = `<div class="done"><div class="okmark">${ic("check")}</div><div class="big goldtxt">Merci ${esc(o.name.split(" ")[0])} !</div><div>Commande <b>${o.ref}</b></div><p style="margin:0;color:var(--muted)">${payTxt} Nous vous appelons pour confirmer la livraison.</p><div class="recap">${esc(orderMsg(o))}</div><p class="note">Gardez votre numéro de commande : il permet de suivre la livraison avec « Suivre ma commande ».</p></div>`;
+  f.innerHTML = `<a class="btn wa" href="https://wa.me/${waNum}?text=${encodeURIComponent(orderMsg(o))}" target="_blank" rel="noopener">${ic("wa")}Envoyer aussi sur WhatsApp</a><button class="btn ghost" id="again">Continuer mes achats</button>`;
+  $("again").onclick = closeDrawer;
+}
+
+const ST_TXT = { nouvelle: "Commande reçue", confirmee: "Confirmée, en préparation", expediee: "En cours de livraison", livree: "Livrée", annulee: "Annulée" };
+const PAY_TXT = { en_attente: "Paiement en attente", paye: "Paiement reçu", echec: "Paiement non abouti", rembourse: "Remboursée" };
+function renderTrack() {
+  const b = $("dbody"), f = $("dfoot");
+  setSteps(0); $("dTitle").textContent = "Suivre ma commande";
+  let last = {}; try { last = JSON.parse(localStorage.getItem("jc_last") || "{}") || {}; } catch (e) {}
+  const t = tracked;
+  b.innerHTML = `<label for="t-ref">Numéro de commande<input id="t-ref" placeholder="JC-XXXXXX" value="${esc(t ? t.ref : last.ref || "")}" autocapitalize="characters"></label>
+    <label for="t-tel">Téléphone utilisé<input id="t-tel" inputmode="tel" placeholder="77 123 45 67" value="${esc(t ? t.tel : last.tel || "")}"></label>
+    <p class="err" id="t-err" hidden></p>
+    ${t && t.data ? `<div class="recap" style="white-space:normal"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>${esc(t.data.ref)}</b><span class="pill st-${t.data.status}">${ST_TXT[t.data.status] || t.data.status}</span></div>
+      <ul style="margin:8px 0;padding-left:18px">${(t.data.order_items || []).map(i => `<li>${i.quantity} × ${esc(i.name)}</li>`).join("")}</ul>
+      <div class="row total"><span>Total</span><span>${fmt(t.data.total)}</span></div>
+      <div style="color:var(--muted);margin-top:4px">${payName(t.data.payment_method)} · ${PAY_TXT[t.data.payment_status] || ""}${t.data.receipt_url ? ` · <a href="${esc(t.data.receipt_url)}" target="_blank" rel="noopener" style="color:var(--gold-hi)">reçu</a>` : ""}</div></div>` : ""}`;
+  f.innerHTML = `<button class="btn gold" id="t-go">Voir le statut</button>`;
+  $("t-go").onclick = async () => {
+    const ref = $("t-ref").value.trim().toUpperCase(), tel = cleanTel($("t-tel").value), e = $("t-err");
+    $("t-go").disabled = true; $("t-go").textContent = "Recherche…";
+    try { tracked = { ref, tel, data: await callFn("order-status", { ref, phone: tel }) }; renderTrack(); }
+    catch (x) { e.textContent = x.message; e.hidden = false; $("t-go").disabled = false; $("t-go").textContent = "Voir le statut"; }
+  };
+}
+
+/* Chargement */
+async function loadProducts() {
+  const { data, error } = await sb.from("products").select("id,name,category,description,price,old_price,stock,badge,image_path").eq("visible", true).order("created_at", { ascending: false });
+  if (error) { $("grid").innerHTML = `<p class="status">Le catalogue n'a pas pu se charger. Vérifiez votre connexion puis rechargez la page.</p>`; return; }
+  products = data; Object.keys(cart).forEach(id => { if (!products.find(p => p.id === id)) delete cart[id]; }); save(); renderGrid(); updCount();
+}
+async function loadZones() { const { data } = await sb.from("shipping_zones").select("id,label,fee").eq("active", true).order("sort"); zones = data || []; }
+renderCats(); updCount(); loadProducts(); loadZones();
+
+// Retour de PayDunya : ?commande=JC-XXXXXX&tel=77...
+const params = new URLSearchParams(location.search);
+if (params.get("commande")) {
+  tracked = { ref: params.get("commande"), tel: params.get("tel") || "" };
+  history.replaceState(null, "", location.pathname);
+  openDrawer("track"); setTimeout(() => $("t-go") && $("t-go").click(), 50);
+}
+</script>
+</body>
+</html>

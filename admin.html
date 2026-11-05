@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Espace gérante – Jalibatou Collection</title>
+<link rel="icon" href="mono.jpg">
+<meta name="theme-color" content="#0b0907">
+<link rel="manifest" href="gerante.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Gérante">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Great+Vibes&family=Jost:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="style.css?v=3">
+<style>
+html,body{margin:0}img{max-width:100%}[hidden]{display:none!important}
+textarea{background:var(--panel);border:1px solid var(--line);color:var(--fg);border-radius:10px;padding:10px 12px;font:inherit}
+.loginbox{max-width:400px;margin:40px auto}
+.linkbtn{background:none;border:none;color:var(--gold-hi);text-decoration:underline;padding:0;font-size:13px}
+.zrow{display:grid;grid-template-columns:minmax(0,1fr) 130px auto;gap:10px;align-items:end}
+.paysel{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.newdot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--gold);margin-right:6px}
+.pp-paye{color:#8fe3b0}.pp-en_attente{color:var(--muted)}.pp-echec{color:#ff9d8a}.pp-rembourse{color:#c9b3ff}
+@media (max-width:760px){
+.zrow{grid-template-columns:minmax(0,1fr) auto;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.zrow>label:first-child{grid-column:1/-1}
+.loginbox{margin:20px auto}
+.linkbtn{padding:10px 0}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap hbar">
+    <a class="brand" href="./"><img src="mono.jpg" alt=""><span><b class="goldtxt">JALIBATOU</b><small>ESPACE GÉRANTE</small></span></a>
+    <span style="flex:1"></span>
+    <a class="cartbtn" id="toShop" href="./" style="text-decoration:none" hidden>Boutique</a>
+    <button class="cartbtn" id="logout" hidden><span class="mob-hide">Se déconnecter</span><span class="dsk-hide">Quitter</span></button>
+  </div>
+</header>
+<main class="wrap admin" id="app"><p class="status">Chargement…</p></main>
+<div class="toast" id="toast" hidden></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="config.js?v=2"></script>
+<script src="common.js?v=3"></script>
+<script>
+let session = null, products = [], orders = [], zones = [], tab = "commandes", ofilter = "actives", editing = null, draftImg = null, channel = null, mode = "login", showForm = false;
+const openMore = new Set();
+const app = $("app");
+
+/* ---------- Connexion ---------- */
+function renderLogin(msg) {
+  $("logout").hidden = true; $("toShop").hidden = true;
+  const titles = { login: "Connexion", signup: "Créer mon accès", reset: "Mot de passe oublié", newpass: "Nouveau mot de passe" };
+  app.innerHTML = `<form class="formbox loginbox" id="lf"><h2 class="goldtxt">${titles[mode]}</h2>
+    ${mode === "signup" ? `<p class="note">Utilisez l'adresse e-mail autorisée pour la boutique. Vous recevrez un e-mail de confirmation.</p>` : ""}
+    ${mode !== "newpass" ? `<label for="l-mail">E-mail<input id="l-mail" type="email" autocomplete="email" required></label>` : ""}
+    ${mode !== "reset" ? `<label for="l-pass">Mot de passe<input id="l-pass" type="password" minlength="8" autocomplete="${mode === "login" ? "current-password" : "new-password"}" required></label>` : ""}
+    <p class="err" id="l-err" ${msg ? "" : "hidden"}>${msg ? esc(msg) : ""}</p>
+    <button class="btn gold" type="submit" id="l-go">${{ login: "Se connecter", signup: "Créer mon accès", reset: "Recevoir le lien", newpass: "Enregistrer" }[mode]}</button>
+    <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap">
+      ${mode === "login" ? `<button type="button" class="linkbtn" data-m="signup">Première connexion ?</button><button type="button" class="linkbtn" data-m="reset">Mot de passe oublié</button>` : mode !== "newpass" ? `<button type="button" class="linkbtn" data-m="login">Retour à la connexion</button>` : ""}
+    </div></form>`;
+  app.querySelectorAll("[data-m]").forEach(b => b.onclick = () => { mode = b.dataset.m; renderLogin(); });
+  $("lf").onsubmit = async e => {
+    e.preventDefault(); const go = $("l-go"), err = $("l-err"); go.disabled = true; err.hidden = true;
+    const mail = $("l-mail") && $("l-mail").value.trim(), pass = $("l-pass") && $("l-pass").value;
+    const redirect = location.origin + location.pathname;
+    let r;
+    if (mode === "login") r = await sb.auth.signInWithPassword({ email: mail, password: pass });
+    else if (mode === "signup") r = await sb.auth.signUp({ email: mail, password: pass, options: { emailRedirectTo: redirect } });
+    else if (mode === "reset") r = await sb.auth.resetPasswordForEmail(mail, { redirectTo: redirect });
+    else r = await sb.auth.updateUser({ password: pass });
+    go.disabled = false;
+    if (r.error) {
+      const m = r.error.message || "";
+      err.textContent = /Invalid login/i.test(m) ? "E-mail ou mot de passe incorrect." : /not confirmed/i.test(m) ? "Confirmez d'abord votre e-mail avec le lien reçu." : /already registered/i.test(m) ? "Ce compte existe déjà : connectez-vous." : /least 8|Password should/i.test(m) ? "Le mot de passe doit faire au moins 8 caractères." : "Erreur : " + m;
+      err.hidden = false; return;
+    }
+    if (mode === "signup") { mode = "login"; renderLogin(); toast("Vérifiez votre boîte mail pour confirmer votre accès."); }
+    else if (mode === "reset") { toast("Lien envoyé par e-mail."); }
+    else if (mode === "newpass") { mode = "login"; toast("Mot de passe enregistré."); start(); }
+    else start();
+  };
+}
+$("logout").onclick = async () => { await sb.auth.signOut(); if (channel) sb.removeChannel(channel); channel = null; mode = "login"; renderLogin(); };
+
+sb.auth.onAuthStateChange((ev, s) => { if (ev === "PASSWORD_RECOVERY") { mode = "newpass"; renderLogin(); } });
+
+async function start() {
+  const { data } = await sb.auth.getSession(); session = data.session;
+  if (!session) return renderLogin();
+  if (mode === "newpass") return;
+  const { data: ok } = await sb.rpc("is_admin");
+  if (!ok) { await sb.auth.signOut(); return renderLogin("Ce compte n'a pas accès à l'espace gérante."); }
+  $("logout").hidden = false; $("toShop").hidden = false;
+  await Promise.all([loadProducts(), loadOrders(), loadZones()]);
+  if (!channel) channel = sb.channel("commandes").on("postgres_changes", { event: "*", schema: "public", table: "orders" }, p => {
+    if (p.eventType === "INSERT") { toast("Nouvelle commande " + p.new.ref); try { navigator.vibrate && navigator.vibrate(200); } catch (e) {} }
+    loadOrders().then(render);
+  }).subscribe();
+  render();
+}
+
+/* ---------- Données ---------- */
+async function loadProducts() { const { data } = await sb.from("products").select("*").order("created_at", { ascending: false }); products = data || []; }
+async function loadOrders() { const { data } = await sb.from("orders").select("*, order_items(name,quantity,unit_price)").order("created_at", { ascending: false }).limit(300); orders = data || []; document.title = (orders.filter(o => o.status === "nouvelle").length ? `(${orders.filter(o => o.status === "nouvelle").length}) ` : "") + "Espace gérante – Jalibatou"; }
+async function loadZones() { const { data } = await sb.from("shipping_zones").select("*").order("sort"); zones = data || []; }
+
+function render() {
+  if (document.activeElement && document.activeElement.closest && document.activeElement.closest("form.keep")) return;
+  const nouv = orders.filter(o => o.status === "nouvelle").length;
+  app.innerHTML = `<div class="admin-top"><h1 class="goldtxt">Espace gérante</h1><a class="btn ghost" href="./" style="text-decoration:none">Voir la boutique</a></div>
+   <div class="tabs" role="tablist">${[["commandes", `Commandes${nouv ? ` (${nouv})` : ""}`, "orders"], ["produits", `Produits (${products.length})`, "box"], ["livraison", "Livraison", "truck"]].map(([k, l, i]) => `<button role="tab" aria-selected="${tab === k}" data-t="${k}"><span class="dsk-hide">${ic(i)}</span><span>${l}</span></button>`).join("")}</div><div id="tabBody"></div>`;
+  app.querySelector(".tabs").onclick = e => { const b = e.target.closest("button"); if (!b) return; tab = b.dataset.t; render(); window.scrollTo(0, 0); };
+  ({ commandes: renderOrders, produits: renderProducts, livraison: renderZones })[tab]();
+}
+
+/* ---------- Commandes ---------- */
+const FILTERS = [["actives", "À traiter"], ["nouvelle", "Nouvelles"], ["confirmee", "Confirmées"], ["expediee", "En livraison"], ["livree", "Livrées"], ["annulee", "Annulées"], ["tout", "Toutes"]];
+function renderOrders() {
+  const tb = $("tabBody");
+  const today = new Date().toDateString(), month = new Date().getMonth();
+  const paidMonth = orders.filter(o => o.payment_status === "paye" && new Date(o.paid_at || o.created_at).getMonth() === month).reduce((s, o) => s + o.total, 0);
+  const kpi = [["Nouvelles", orders.filter(o => o.status === "nouvelle").length], ["À livrer", orders.filter(o => o.status === "confirmee" || o.status === "expediee").length], ["Aujourd'hui", orders.filter(o => new Date(o.created_at).toDateString() === today).length], ["Encaissé ce mois", fmt(paidMonth)]];
+  const list = orders.filter(o => ofilter === "tout" ? true : ofilter === "actives" ? ["nouvelle", "confirmee", "expediee"].includes(o.status) : o.status === ofilter);
+  tb.innerHTML = `<div class="kpis">${kpi.map(([l, v]) => `<div class="kpi"><small>${l}</small><b>${v}</b></div>`).join("")}</div>
+   <div class="filters">${FILTERS.map(([k, l]) => `<button aria-pressed="${k === ofilter}" data-f="${k}">${l}</button>`).join("")}</div>
+   <button class="sm fab" id="manual"><span class="mob-hide">+ Commande WhatsApp / boutique</span><span class="dsk-hide">+ Commande</span></button>
+   <div id="manualBox"></div>
+   <div class="orders">${list.length ? list.map(orderCard).join("") : `<p class="status">${orders.length ? "Aucune commande dans cette liste." : "Aucune commande pour l'instant. Les commandes du site arrivent ici en direct."}</p>`}</div>`;
+  tb.querySelector(".filters").onclick = e => { const b = e.target.closest("[data-f]"); if (!b) return; ofilter = b.dataset.f; renderOrders(); };
+  $("manual").onclick = manualForm;
+  const box = tb.querySelector(".orders");
+  const patchOrder = async (id, patch) => {
+    const { error } = await sb.from("orders").update(patch).eq("id", id);
+    toast(error ? "Échec de la mise à jour, réessayez" : "Mis à jour"); await loadOrders(); render();
+  };
+  const paidPatch = v => ({ payment_status: v, ...(v === "paye" ? { paid_at: new Date().toISOString() } : {}) });
+  box.onchange = e => {
+    const s = e.target.closest("select[data-o]"); if (!s) return;
+    patchOrder(s.dataset.o, s.dataset.k === "pay" ? paidPatch(s.value) : { status: s.value });
+  };
+  box.onclick = async e => {
+    const more = e.target.closest("summary[data-more]");
+    if (more) { const id = more.dataset.more; openMore.has(id) ? openMore.delete(id) : openMore.add(id); return; }
+    const act = e.target.closest("[data-next],[data-paid]");
+    if (act) { act.disabled = true; return patchOrder(act.dataset.next || act.dataset.paid, act.dataset.next ? { status: act.dataset.st } : paidPatch("paye")); }
+    const b = e.target.closest("[data-del]"); if (!b) return;
+    if (b.dataset.confirm !== "1") { b.dataset.confirm = "1"; b.textContent = "Confirmer la suppression"; return; }
+    const { error } = await sb.from("orders").delete().eq("id", b.dataset.del);
+    toast(error ? "Suppression impossible" : "Commande supprimée"); await loadOrders(); render();
+  };
+}
+const NEXT = { nouvelle: ["confirmee", "Confirmer"], confirmee: ["expediee", "Passer en livraison"], expediee: ["livree", "Marquer livrée"] };
+function orderCard(o) {
+  const st = STATUTS.find(s => s[0] === o.status) || STATUTS[0];
+  const d = new Date(o.created_at);
+  const when = d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" }) + " à " + d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+  const z = (zones.find(x => x.id === o.zone) || { label: o.zone || "" }).label;
+  const msgs = {
+    confirm: `Bonjour ${o.customer_name}, ici ${CFG.BOUTIQUE}. Votre commande ${o.ref} (${fmt(o.total)}) est bien reçue.${o.payment_status !== "paye" && o.payment_method !== "livraison" ? ` Merci de régler par ${payName(o.payment_method)} au ${"+" + CFG.WHATSAPP}.` : ""} Nous vous livrons très vite !`,
+    ship: `Bonjour ${o.customer_name}, votre commande ${o.ref} est en route. Le livreur vous appellera au ${o.phone}.`
+  };
+  const next = NEXT[o.status], unpaid = o.payment_status === "en_attente" && o.status !== "annulee";
+  return `<article class="order ${o.status === "nouvelle" ? "isnew" : ""}"><div class="ohead"><div class="who">${o.status === "nouvelle" ? `<span class="newdot"></span>` : ""}<b>${esc(o.customer_name)}</b><div class="meta">${esc(o.ref)} · ${when}${o.source !== "site" ? " · " + esc(o.source) : ""}</div></div><div class="tot">${fmt(o.total)}</div></div>
+   <div class="ostate"><span class="pill st-${o.status === "confirmee" ? "payee" : o.status}">${st[1]}</span><span class="meta">${payName(o.payment_method)} · <span class="pp-${o.payment_status}">${(PAIEMENTS.find(p => p[0] === o.payment_status) || [, ""])[1]}</span>${o.receipt_url ? ` · <a href="${esc(o.receipt_url)}" target="_blank" rel="noopener" style="color:var(--gold-hi)">reçu</a>` : ""}</span></div>
+   <ul>${(o.order_items || []).map(i => `<li>${i.quantity} × ${esc(i.name)}${i.unit_price ? ` <span class="meta">${fmt(i.unit_price * i.quantity)}</span>` : ""}</li>`).join("")}</ul>
+   <div class="meta">${esc(o.phone)} · ${esc(z)}${o.address ? " · " + esc(o.address) : ""}</div>${o.note ? `<div class="meta">Note : ${esc(o.note)}</div>` : ""}
+   ${next || unpaid ? `<div class="omain">${next ? `<button class="btn gold" data-next="${o.id}" data-st="${next[0]}">${next[1]}</button>` : ""}${unpaid ? `<button class="btn ghost" data-paid="${o.id}">Marquer payée</button>` : ""}</div>` : ""}
+   <div class="acts"><a href="tel:+221${esc(o.phone)}">${ic("phone")}Appeler</a><a href="https://wa.me/221${esc(o.phone)}?text=${encodeURIComponent(msgs.confirm)}" target="_blank" rel="noopener">${ic("wa")}Confirmer</a><a href="https://wa.me/221${esc(o.phone)}?text=${encodeURIComponent(msgs.ship)}" target="_blank" rel="noopener">${ic("wa")}En route</a></div>
+   <details class="omore" ${openMore.has(o.id) ? "open" : ""}><summary data-more="${o.id}">Plus d'options</summary>
+     <div class="paysel"><select data-o="${o.id}" data-k="st" id="st-${o.id}" aria-label="Statut de la commande">${STATUTS.map(s => `<option value="${s[0]}" ${s[0] === o.status ? "selected" : ""}>${s[1]}</option>`).join("")}</select>
+     <select data-o="${o.id}" data-k="pay" id="pp-${o.id}" aria-label="Statut du paiement">${PAIEMENTS.map(s => `<option value="${s[0]}" ${s[0] === o.payment_status ? "selected" : ""}>${s[1]}</option>`).join("")}</select></div>
+     <button class="linkdanger" data-del="${o.id}">Supprimer la commande</button></details></article>`;
+}
+function manualForm() {
+  const mb = $("manualBox"); if (mb.innerHTML) { mb.innerHTML = ""; return; }
+  mb.innerHTML = `<form class="formbox keep" id="mform" style="margin-bottom:14px"><h2>Saisir une commande</h2>
+   <div class="r2"><label for="m-nom">Cliente<input id="m-nom" required placeholder="Fatou Diop"></label><label for="m-tel">Téléphone<input id="m-tel" required inputmode="tel" placeholder="77 123 45 67"></label></div>
+   <label for="m-items">Articles (un par ligne, ex. « 2 × Créoles dorées »)<textarea id="m-items" rows="3" required></textarea></label>
+   <div class="r2"><label for="m-tot">Total articles (FCFA)<input id="m-tot" type="number" min="0" step="100" required></label><label for="m-zone">Zone<select id="m-zone">${zones.map(z => `<option value="${z.id}">${esc(z.label)} · ${z.fee ? fmt(z.fee) : "gratuit"}</option>`).join("")}</select></label></div>
+   <div class="r2"><label for="m-adr">Adresse<input id="m-adr" placeholder="Quartier"></label><label for="m-pay">Paiement<select id="m-pay">${PAYS.map(p => `<option value="${p[0]}">${p[1]}</option>`).join("")}</select></label></div>
+   <div class="r2"><label for="m-src">Origine<select id="m-src"><option value="whatsapp">WhatsApp</option><option value="boutique">En boutique</option></select></label><label for="m-paid">Déjà payée ?<select id="m-paid"><option value="en_attente">Non</option><option value="paye">Oui</option></select></label></div>
+   <p class="err" id="m-err" hidden></p><button class="btn gold" type="submit" id="m-go">Enregistrer la commande</button></form>`;
+  mb.scrollIntoView({ block: "start", behavior: "smooth" });
+  $("mform").onsubmit = async e => {
+    e.preventDefault(); const err = $("m-err");
+    const tel = cleanTel($("m-tel").value);
+    if (!telOk(tel)) { err.textContent = "Numéro invalide : 9 chiffres commençant par 70, 75, 76, 77 ou 78."; err.hidden = false; return; }
+    $("m-go").disabled = true;
+    const its = $("m-items").value.split("\n").map(l => l.trim()).filter(Boolean).map(l => { const m = l.match(/^(\d+)\s*[x×*]\s*(.+)$/i); return m ? { quantity: +m[1], name: m[2] } : { quantity: 1, name: l }; });
+    const zone = $("m-zone").value, fee = (zones.find(z => z.id === zone) || { fee: 0 }).fee, subtotal = Number($("m-tot").value) || 0;
+    const ref = "JC-" + Math.random().toString(36).slice(2, 8).toUpperCase().padEnd(6, "0");
+    const paid = $("m-paid").value;
+    const { data, error } = await sb.from("orders").insert({ ref, customer_name: $("m-nom").value.trim(), phone: tel, address: $("m-adr").value.trim(), zone, shipping_fee: fee, subtotal, total: subtotal + fee, payment_method: $("m-pay").value, payment_status: paid, paid_at: paid === "paye" ? new Date().toISOString() : null, status: "confirmee", source: $("m-src").value }).select("id").single();
+    if (error) { err.textContent = "Enregistrement impossible : " + error.message; err.hidden = false; $("m-go").disabled = false; return; }
+    if (its.length) await sb.from("order_items").insert(its.map(i => ({ ...i, order_id: data.id, unit_price: 0 })));
+    toast("Commande " + ref + " enregistrée"); mb.innerHTML = ""; await loadOrders(); render();
+  };
+}
+
+/* ---------- Produits ---------- */
+function renderProducts() {
+  const tb = $("tabBody"); const p = editing ? products.find(x => x.id === editing) || {} : {};
+  const pv = draftImg ? draftImg.url : imgUrl(p.image_path);
+  tb.innerHTML = `<div class="two"><button class="btn gold addp ${editing || showForm ? "mob-hide dsk-hide" : ""}" id="pnew">+ Ajouter un produit</button><div class="pformwrap ${editing || showForm ? "open" : ""}"><form class="formbox keep" id="pform"><h2>${editing ? "Modifier le produit" : "Ajouter un produit"}</h2>
+   <div class="photo"><div class="pv" id="pv">${pv ? `<img src="${pv}" alt="">` : "Pas de photo"}</div><label class="photobtn" for="p-img">${ic("camera")}<span>Prendre ou choisir une photo</span><input type="file" id="p-img" accept="image/png,image/jpeg,image/webp"></label></div>
+   <label for="p-name">Nom<input id="p-name" required maxlength="120" value="${esc(p.name || "")}" placeholder="Sac à main structuré doré"></label>
+   <label for="p-desc">Description courte (taille, couleur…)<input id="p-desc" maxlength="160" value="${esc(p.description || "")}" placeholder="Similicuir, 30 × 22 cm, noir"></label>
+   <div class="r2"><label for="p-cat">Catégorie<select id="p-cat">${CATS.slice(1).map(c => `<option value="${c[0]}" ${c[0] === p.category ? "selected" : ""}>${c[1]}</option>`).join("")}</select></label><label for="p-stock">Stock<input id="p-stock" type="number" min="0" value="${p.stock ?? ""}" placeholder="Illimité"></label></div>
+   <div class="r2"><label for="p-price">Prix (FCFA)<input id="p-price" type="number" min="0" step="50" required value="${p.price ?? ""}"></label><label for="p-old">Ancien prix (promo)<input id="p-old" type="number" min="0" step="50" value="${p.old_price || ""}"></label></div>
+   <label for="p-badge">Étiquette<select id="p-badge">${["", "Nouveau", "Top vente", "Promo", "Arrivage"].map(b => `<option ${b === (p.badge || "") ? "selected" : ""} value="${b}">${b || "Aucune"}</option>`).join("")}</select></label>
+   <p class="err" id="p-err" hidden></p>
+   <div style="display:flex;gap:8px">${editing || showForm ? `<button type="button" class="btn ghost" id="pcancel">Annuler</button>` : ""}<button class="btn gold" type="submit" id="psave" style="flex:1">${editing ? "Enregistrer" : "Ajouter à la boutique"}</button></div></form></div>
+   <div><div class="sechead"><h2>Catalogue</h2><span>${products.filter(x => x.visible).length} en ligne sur ${products.length}</span></div><div class="plist">${products.length ? products.map(x => `<div class="prow ${x.visible ? "" : "hiddenp"}"><div class="mini">${x.image_path ? `<img src="${imgUrl(x.image_path)}" alt="">` : (ICONS[x.category] || "")}</div><div style="min-width:0"><h4>${esc(x.name)}</h4><small>${catName(x.category)} · ${fmt(x.price)}${x.visible ? "" : " · masqué"}</small></div>${x.stock !== null ? `<div class="stk" aria-label="Stock"><button data-sd="${x.id}" aria-label="Retirer du stock">−</button><b>${x.stock}</b><button data-si="${x.id}" aria-label="Ajouter au stock">+</button></div>` : `<small>Stock illimité</small>`}<div class="pa"><button class="sm" data-e="${x.id}">Modifier</button><button class="sm" data-v="${x.id}">${x.visible ? "Masquer" : "Afficher"}</button><button class="sm danger" data-x="${x.id}">Suppr.</button></div></div>`).join("") : `<p class="status">Aucun produit. Ajoutez le premier avec le formulaire.</p>`}</div></div></div>`;
+  if ($("pcancel")) $("pcancel").onclick = () => { editing = null; draftImg = null; showForm = false; renderProducts(); };
+  $("pnew").onclick = () => { showForm = true; renderProducts(); window.scrollTo(0, 0); };
+  $("p-img").onchange = async e => {
+    const f = e.target.files[0]; if (!f) return; const err = $("p-err"); err.hidden = true;
+    if (f.size > 5 * 1024 * 1024) { err.textContent = "Photo trop lourde (5 Mo maximum)."; err.hidden = false; return; }
+    $("pv").textContent = "Envoi…";
+    const blob = await shrink(f);
+    const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
+    const { error } = await sb.storage.from("produits").upload(path, blob, { contentType: "image/jpeg", cacheControl: "31536000" });
+    if (error) { $("pv").textContent = "Pas de photo"; err.textContent = "L'envoi de la photo a échoué, réessayez."; err.hidden = false; return; }
+    draftImg = { path, url: imgUrl(path) }; $("pv").innerHTML = `<img src="${draftImg.url}" alt="">`;
+  };
+  $("pform").onsubmit = async e => {
+    e.preventDefault(); $("psave").disabled = true;
+    const st = $("p-stock").value;
+    const data = { name: $("p-name").value.trim(), description: $("p-desc").value.trim() || null, category: $("p-cat").value, price: Number($("p-price").value) || 0, old_price: Number($("p-old").value) || null, stock: st === "" ? null : Number(st), badge: $("p-badge").value || null, image_path: draftImg ? draftImg.path : (p.image_path || null) };
+    const { error } = editing ? await sb.from("products").update(data).eq("id", editing) : await sb.from("products").insert(data);
+    if (error) { $("psave").disabled = false; const m = $("p-err"); m.textContent = "Enregistrement impossible : " + error.message; m.hidden = false; return; }
+    if (editing && draftImg && p.image_path) sb.storage.from("produits").remove([p.image_path]);
+    toast(editing ? "Produit mis à jour" : "Produit ajouté à la boutique"); editing = null; draftImg = null; showForm = false; await loadProducts(); document.activeElement.blur(); render();
+  };
+  tb.querySelector(".plist").onclick = async e => {
+    const b = e.target.closest("button"); if (!b) return;
+    if (b.dataset.si || b.dataset.sd) {
+      const x = products.find(p => p.id === (b.dataset.si || b.dataset.sd)), v = Math.max(0, x.stock + (b.dataset.si ? 1 : -1));
+      b.disabled = true;
+      const { error } = await sb.from("products").update({ stock: v }).eq("id", x.id);
+      if (error) toast("Échec, réessayez"); await loadProducts(); return render();
+    }
+    if (b.dataset.e) { editing = b.dataset.e; draftImg = null; renderProducts(); window.scrollTo({ top: 0, behavior: "smooth" }); return; }
+    if (b.dataset.v) { const x = products.find(p => p.id === b.dataset.v); const { error } = await sb.from("products").update({ visible: !x.visible }).eq("id", x.id); toast(error ? "Échec, réessayez" : x.visible ? "Produit masqué" : "Produit en ligne"); await loadProducts(); return render(); }
+    if (b.dataset.x) {
+      if (b.dataset.confirm !== "1") { b.dataset.confirm = "1"; b.textContent = "Confirmer"; return; }
+      const x = products.find(p => p.id === b.dataset.x);
+      const { error } = await sb.from("products").delete().eq("id", x.id);
+      if (!error && x.image_path) sb.storage.from("produits").remove([x.image_path]);
+      if (editing === x.id) editing = null;
+      toast(error ? "Suppression impossible" : "Produit supprimé"); await loadProducts(); render();
+    }
+  };
+}
+// Réduit la photo à 1200 px pour un site rapide sur mobile
+function shrink(file) {
+  return new Promise(res => {
+    const img = new Image(); const u = URL.createObjectURL(file);
+    img.onload = () => { const s = Math.min(1, 1200 / Math.max(img.width, img.height)); const c = document.createElement("canvas"); c.width = Math.round(img.width * s); c.height = Math.round(img.height * s); c.getContext("2d").drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(u); c.toBlob(b => res(b || file), "image/jpeg", 0.85); };
+    img.onerror = () => res(file); img.src = u;
+  });
+}
+
+/* ---------- Livraison ---------- */
+function renderZones() {
+  $("tabBody").innerHTML = `<form class="formbox keep" id="zform" style="max-width:640px"><h2>Frais de livraison</h2>
+   ${zones.map(z => `<div class="zrow"><label for="zl-${z.id}">Zone<input id="zl-${z.id}" value="${esc(z.label)}"></label><label for="zf-${z.id}">Frais (FCFA)<input id="zf-${z.id}" type="number" min="0" step="100" value="${z.fee}"></label><label class="opt" style="padding:9px 10px"><input type="checkbox" id="za-${z.id}" ${z.active ? "checked" : ""}>Active</label></div>`).join("")}
+   <button class="btn gold" type="submit">Enregistrer les frais</button></form>`;
+  $("zform").onsubmit = async e => {
+    e.preventDefault(); let bad = false;
+    for (const z of zones) { const { error } = await sb.from("shipping_zones").update({ label: $("zl-" + z.id).value.trim() || z.label, fee: Number($("zf-" + z.id).value) || 0, active: $("za-" + z.id).checked }).eq("id", z.id); if (error) bad = true; }
+    toast(bad ? "Certaines zones n'ont pas été enregistrées" : "Frais enregistrés"); document.activeElement.blur(); await loadZones(); render();
+  };
+}
+
+start();
+</script>
+</body>
+</html>
