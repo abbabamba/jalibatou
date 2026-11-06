@@ -17,7 +17,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Great+Vibes&family=Jost:wght@400;500;600&display=swap">
-<link rel="stylesheet" href="style.css?v=3">
+<link rel="stylesheet" href="style.css?v=4">
 <style>html,body{margin:0}img{max-width:100%}[hidden]{display:none!important}body{-webkit-text-size-adjust:100%}</style>
 </head>
 <body>
@@ -51,6 +51,7 @@
     <div class="cats" id="cats" role="group" aria-label="Catégories"></div>
     <div class="sechead"><h2 id="secTitle">Toute la collection</h2><span id="secNote"></span></div>
     <div class="grid" id="grid" aria-busy="true"><div class="card sk"></div><div class="card sk"></div><div class="card sk"></div><div class="card sk"></div></div>
+    <div class="more" id="more" hidden><span id="moreNote" aria-live="polite"></span><button class="btn ghost" id="moreBtn">Voir plus</button></div>
   </section>
 
   <section class="pay"><div class="wrap">
@@ -84,7 +85,7 @@
 <div class="toast" id="toast" hidden></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="config.js?v=2"></script>
+<script src="config.js?v=3"></script>
 <script src="common.js?v=3"></script>
 <script>
 $("yr").textContent = new Date().getFullYear();
@@ -111,17 +112,25 @@ $("cats").onclick = e => {
 };
 $("q").oninput = e => { q = e.target.value.toLowerCase(); renderGrid(); };
 const outOfStock = p => p.stock !== null && p.stock <= 0;
+const PAGE = 12; // nombre de produits affichés à la fois
+let shown = PAGE, listed = [];
+function renderMore() {
+  $("more").hidden = shown >= listed.length;
+  $("moreNote").textContent = `${shown} sur ${listed.length} articles`;
+}
+function cardHtml(x, i) {
+  const out = outOfStock(x);
+  const badge = out ? `<span class="badge low">Épuisé</span>` : (x.stock !== null && x.stock <= 3) ? `<span class="badge low">Plus que ${x.stock}</span>` : x.badge ? `<span class="badge">${esc(x.badge)}</span>` : "";
+  return `<article class="card ${out ? "out" : ""}" style="--i:${Math.min(i, 8)}"><div class="thumb" data-open="${x.id}" role="button" tabindex="0" aria-label="Voir ${esc(x.name)}">${ICONS[x.category] || ""}${x.image_path ? `<img src="${imgUrl(x.image_path)}" alt="" loading="lazy" onerror="this.remove()">` : ""}${badge}</div><div class="info"><span class="cat">${catName(x.category)}</span><h3 data-open="${x.id}">${esc(x.name)}</h3>${x.description ? `<small class="desc">${esc(x.description)}</small>` : ""}${priceHtml(x)}<button class="add" data-id="${x.id}" ${out ? "disabled" : ""}>${out ? "Épuisé" : "Ajouter au panier"}</button></div></article>`;
+}
 function renderGrid() {
   const list = products.filter(x => (cat === "tout" || x.category === cat) && x.name.toLowerCase().includes(q));
   $("secTitle").textContent = cat === "tout" ? "Toute la collection" : catName(cat);
   $("secNote").textContent = products.length ? `${list.length} article${list.length > 1 ? "s" : ""}` : "";
   $("grid").removeAttribute("aria-busy");
-  if (!products.length) { $("grid").innerHTML = `<p class="status">La collection arrive bientôt. Revenez très vite !</p>`; return; }
-  $("grid").innerHTML = list.length ? list.map((x, i) => {
-    const out = outOfStock(x);
-    const badge = out ? `<span class="badge low">Épuisé</span>` : (x.stock !== null && x.stock <= 3) ? `<span class="badge low">Plus que ${x.stock}</span>` : x.badge ? `<span class="badge">${esc(x.badge)}</span>` : "";
-    return `<article class="card ${out ? "out" : ""}" style="--i:${Math.min(i, 8)}"><div class="thumb" data-open="${x.id}" role="button" tabindex="0" aria-label="Voir ${esc(x.name)}">${ICONS[x.category] || ""}${x.image_path ? `<img src="${imgUrl(x.image_path)}" alt="" loading="lazy" onerror="this.remove()">` : ""}${badge}</div><div class="info"><span class="cat">${catName(x.category)}</span><h3 data-open="${x.id}">${esc(x.name)}</h3>${x.description ? `<small class="desc">${esc(x.description)}</small>` : ""}${priceHtml(x)}<button class="add" data-id="${x.id}" ${out ? "disabled" : ""}>${out ? "Épuisé" : "Ajouter au panier"}</button></div></article>`;
-  }).join("") : `<p class="empty">Aucun article ne correspond à votre recherche.</p>`;
+  if (!products.length) { listed = []; renderMore(); $("grid").innerHTML = `<p class="status">La collection arrive bientôt. Revenez très vite !</p>`; return; }
+  listed = list; shown = PAGE; renderMore();
+  $("grid").innerHTML = list.length ? list.slice(0, shown).map(cardHtml).join("") : `<p class="empty">Aucun article ne correspond à votre recherche.</p>`;
 }
 function priceHtml(x) {
   const off = x.old_price > x.price ? Math.round((1 - x.price / x.old_price) * 100) : 0;
@@ -134,6 +143,12 @@ function addToCart(p, qty = 1) {
   try { navigator.vibrate && navigator.vibrate(15); } catch (e) {}
   return true;
 }
+$("moreBtn").onclick = () => {
+  const start = shown; shown = Math.min(shown + PAGE, listed.length);
+  $("grid").insertAdjacentHTML("beforeend", listed.slice(start, shown).map(cardHtml).join(""));
+  renderMore();
+  $("grid").children[start].querySelector(".thumb").focus({ preventScroll: true });
+};
 $("grid").onclick = e => {
   const b = e.target.closest(".add");
   if (b) {

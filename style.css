@@ -52,6 +52,8 @@ header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:rgb
 
 /* produits */
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:18px;padding-bottom:40px}
+.more{display:flex;flex-direction:column;align-items:center;gap:10px;padding-bottom:40px;color:var(--muted);font-size:13px}
+.more .btn{min-width:200px;min-height:44px;font-size:15px}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
 .thumb{aspect-ratio:1/1;max-width:100%;display:grid;place-items:center;position:relative;background:radial-gradient(circle at 50% 40%,#2a2013,#120e09 70%)}
 .thumb svg{width:44%;height:44%;color:var(--gold)}
